@@ -1,4 +1,4 @@
-package cats
+package catz
 
 import cats.instances.string._
 import cats.syntax.semigroup._

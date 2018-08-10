@@ -1,4 +1,4 @@
-package cats.typeclasses.json
+package catz.typeclasses.json
 
 object JsonApp extends App {
 
@@ -49,11 +49,8 @@ object JsonApp extends App {
 
   private val dave = Person("Dave", "dave@example.com")
 
-
   println(Json.toJson(dave))
   println(dave.toJson)
   println(Some("Dave"))
 
-
-  implicitly[JsonWriter[String]]
 }
