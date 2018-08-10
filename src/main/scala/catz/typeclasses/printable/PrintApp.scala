@@ -26,10 +26,8 @@ object PrintApp extends App {
 
   object PrintableSyntax {
     implicit class PrintableOps[A](value: A) {
-      def format(implicit w: Printable[A]): String =
-        w.format(value)
-      def print(implicit w: Printable[A]): Unit =
-        println(w.format(value))
+      def format(implicit w: Printable[A]): String = w.format(value)
+      def print(implicit w: Printable[A]): Unit = println(w.format(value))
     }
   }
 
