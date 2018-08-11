@@ -7,7 +7,7 @@ import cats.instances.int._
 import cats.instances.long._
 import cats.instances.string._
 import cats.syntax.eq._
-import catz.typeclasses.comparable.Cats._
+import Cats._
 
 object EqApp extends App {
 
