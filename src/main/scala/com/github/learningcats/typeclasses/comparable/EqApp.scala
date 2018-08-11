@@ -1,4 +1,4 @@
-package catz.typeclasses.comparable
+package com.github.learningcats.typeclasses.comparable
 
 import java.util.Date
 

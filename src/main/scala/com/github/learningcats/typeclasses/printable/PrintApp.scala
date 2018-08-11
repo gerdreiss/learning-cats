@@ -1,4 +1,4 @@
-package catz.typeclasses.printable
+package com.github.learningcats.typeclasses.printable
 
 object PrintApp extends App {
 

@@ -1,4 +1,4 @@
-package catz.typeclasses.json
+package com.github.learningcats.typeclasses.json
 
 object JsonApp extends App {
 

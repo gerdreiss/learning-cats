@@ -1,4 +1,4 @@
-package catz
+package com.github.learningcats
 
 import cats.instances.string._
 import cats.syntax.semigroup._

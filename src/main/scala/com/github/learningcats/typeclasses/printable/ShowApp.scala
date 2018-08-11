@@ -1,4 +1,4 @@
-package catz.typeclasses.printable
+package com.github.learningcats.typeclasses.printable
 
 import cats.Show
 import cats.instances.int._

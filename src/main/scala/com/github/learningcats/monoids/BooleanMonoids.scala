@@ -1,4 +1,4 @@
-package catz.monoids
+package com.github.learningcats.monoids
 
 import cats.Monoid
 

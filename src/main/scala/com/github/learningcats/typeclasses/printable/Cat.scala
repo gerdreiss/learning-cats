@@ -1,4 +1,4 @@
-package catz.typeclasses.printable
+package com.github.learningcats.typeclasses.printable
 
 final case class Cat(name: String, age: Int, color: String)
 
