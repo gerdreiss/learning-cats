@@ -2,7 +2,6 @@ package com.github.learningcats.monads
 
 import cats.Id
 import cats.data.{Writer, WriterT}
-import cats.instances.vector._ // for Monoid
 
 object WriterM extends App {
 

@@ -20,3 +20,12 @@ addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
 
 
 enablePlugins(JavaAppPackaging)
+
+dockerBaseImage := "openjdk:8-jre-alpine"
+packageName in Docker := "dockerised-learning-cats"
+
+import com.typesafe.sbt.packager.docker._
+dockerCommands ++= Seq(
+  Cmd("USER", "root"),
+  ExecCmd("RUN", "apk", "add", "--no-cache", "bash")
+)
