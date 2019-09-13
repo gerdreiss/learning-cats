@@ -1,7 +1,7 @@
 organization := "com.github.gerdreiss"
 name := "learning-cats"
 version := "1.0.0"
-scalaVersion := "2.12.6"
+scalaVersion := "2.12.9"
 
 scalacOptions ++= Seq(
   "-encoding", "UTF-8",   // source files are in UTF-8
@@ -14,9 +14,9 @@ scalacOptions ++= Seq(
   "-Ypartial-unification" // allow the compiler to unify type constructors of different arities
 )
 
-libraryDependencies += "org.typelevel" %% "cats-core" % "1.2.0"
+libraryDependencies += "org.typelevel" %% "cats-core" % "2.0.0"
 
-addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
+addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.10")
 
 
 enablePlugins(JavaAppPackaging)
