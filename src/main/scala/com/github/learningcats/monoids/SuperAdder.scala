@@ -1,11 +1,7 @@
 package com.github.learningcats.monoids
 
-import cats.Monoid
-import cats.instances.int._
-import cats.instances.list._
-import cats.instances.option._
-import cats.syntax.option._
-import cats.syntax.semigroup._
+import cats._
+import cats.implicits._
 
 object SuperAdder extends App {
 
@@ -29,4 +25,5 @@ object SuperAdder extends App {
   println(add(List(List(1, 2), List(3, 4))))
   println(add(List(1.some, 2.some, none, 3.some)))
   println(add(List(Order(1000.0, 100), Order(2300.0, 120.0))))
+  println(Semigroup[Int => Int].combine(_ + 1, _ * 10).apply(6))
 }
