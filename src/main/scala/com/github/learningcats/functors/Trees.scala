@@ -16,8 +16,8 @@ object Trees extends App {
 
   implicit val treeFunctor: Functor[Tree] = new Functor[Tree] {
     override def map[A, B](fa: Tree[A])(f: A => B): Tree[B] = fa match {
-      case Branch(left, right) => Branch(left map f, right map f)
       case Leaf(value) => Leaf(f(value))
+      case Branch(l, r) => Branch(l.map(f), r.map(f))
     }
   }
 
