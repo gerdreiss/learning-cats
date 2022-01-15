@@ -11,13 +11,15 @@ given shoppingCartMonoid(using
   def empty: ShoppingCart =
     ShoppingCart(stringListMonoid.empty, bigDecimalMonoid.empty)
 
-  def combine(a: ShoppingCart, b: ShoppingCart) =
+  def combine(a: ShoppingCart, b: ShoppingCart): ShoppingCart =
     ShoppingCart(
       stringListMonoid.combine(a.items, b.items),
       bigDecimalMonoid.combine(a.total, b.total)
     )
 
-def checkout(shoppingCarts: List[ShoppingCart])(using M: Monoid[ShoppingCart]): ShoppingCart =
+def checkout(shoppingCarts: List[ShoppingCart])(using
+    M: Monoid[ShoppingCart]
+): ShoppingCart =
   shoppingCarts.fold(M.empty)(M.combine)
 
 @main def monoidExercise(): Unit =
