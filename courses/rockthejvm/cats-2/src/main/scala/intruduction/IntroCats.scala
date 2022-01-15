@@ -1,7 +1,7 @@
 package intruduction
 
 @main def introCats(): Unit =
-  // Eq
+  // Example: Eq
   // part 1 - type class import
   import cats.Eq
   // part 2 - type class instance import
