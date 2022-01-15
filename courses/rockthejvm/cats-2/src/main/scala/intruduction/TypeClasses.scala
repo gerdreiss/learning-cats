@@ -1,6 +1,7 @@
 package intruduction
 
 object Model:
+
   enum Gender:
     case MALE, FEMALE, OTHER
 
@@ -66,4 +67,5 @@ end JsonSyntax
       Person("Jane", Gender.FEMALE, 36) ::
       Person("Jamie", Gender.MALE, 10) ::
       Nil
+
   println(family.mkJson)
