@@ -1,4 +1,4 @@
-package intruduction
+package lectures.intruduction
 
 object Model:
 

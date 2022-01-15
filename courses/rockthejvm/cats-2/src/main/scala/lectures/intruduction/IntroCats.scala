@@ -1,4 +1,4 @@
-package intruduction
+package lectures.intruduction
 
 @main def introCats(): Unit =
   // Example: Eq

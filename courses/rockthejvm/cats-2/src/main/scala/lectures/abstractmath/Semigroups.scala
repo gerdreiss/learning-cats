@@ -1,4 +1,4 @@
-package abstractmath
+package lectures.abstractmath
 
 // semigroups combine elements of same type
 import cats.Semigroup
@@ -7,6 +7,17 @@ import cats.Semigroup
 //import cats.instances.option.*
 //import cats.instances.string.*
 import cats.syntax.semigroup.*
+
+case class Expense(id: Long, amount: BigDecimal)
+
+given expenseSemigroup: Semigroup[Expense] =
+  Semigroup.instance[Expense] { (l, r) =>
+    Expense(math.max(l.id, r.id), l.amount |+| r.amount)
+  }
+
+// generalized API
+def reduceThings[T](ts: List[T])(using semigroup: Semigroup[T]): T =
+  ts.reduce(_ |+| _)
 
 @main def semigroups(): Unit =
   val x              = 2
@@ -26,10 +37,6 @@ import cats.syntax.semigroup.*
   println(s"you could combine $a and $b via |+|, too, to ${a |+| b}")
   println(s"combined $strings via reduce(combine) to ${strings.reduce(stringSemigroup.combine)}")
 
-  // generalized API
-  def reduceThings[T](ts: List[T])(using semigroup: Semigroup[T]): T =
-    ts.reduce(_ |+| _)
-
   println(s"combined $ints via generalized reduceThings function to ${reduceThings(ints)}")
   println(s"combined $strings via generalized reduceThings function to ${reduceThings(strings)}")
 
@@ -40,12 +47,6 @@ import cats.syntax.semigroup.*
   println(
     s"combined $intOptsWithNone via generalized reduceThings function to ${reduceThings(intOptsWithNone)}"
   )
-
-  case class Expense(id: Long, amount: BigDecimal)
-  given expenseSemigroup: Semigroup[Expense] =
-    Semigroup.instance[Expense] { (l, r) =>
-      Expense(math.max(l.id, r.id), l.amount |+| r.amount)
-    }
 
   val exp1 = Expense(1, BigDecimal(99.90))
   val exp2 = Expense(2, BigDecimal(20.0))

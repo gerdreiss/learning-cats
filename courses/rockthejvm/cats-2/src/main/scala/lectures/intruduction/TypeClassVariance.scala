@@ -1,4 +1,4 @@
-package intruduction
+package lectures.intruduction
 
 // all these imports are seemingly unnecessary ¯\_(ツ)_/¯
 // import cats.Eq
