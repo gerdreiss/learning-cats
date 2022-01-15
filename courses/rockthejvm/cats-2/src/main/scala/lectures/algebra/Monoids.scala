@@ -1,4 +1,4 @@
-package lectures.abstractmath
+package lectures.algebra
 
 import cats.Monoid
 

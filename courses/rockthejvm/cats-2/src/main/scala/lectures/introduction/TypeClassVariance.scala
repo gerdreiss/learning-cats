@@ -1,4 +1,4 @@
-package lectures.intruduction
+package lectures.introduction
 
 // all these imports are seemingly unnecessary ¯\_(ツ)_/¯
 // import cats.Eq

@@ -1,4 +1,4 @@
-package lectures.abstractmath
+package lectures.algebra
 
 // semigroups combine elements of same type
 import cats.Semigroup
