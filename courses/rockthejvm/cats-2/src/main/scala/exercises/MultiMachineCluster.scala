@@ -33,11 +33,11 @@ object MultiMachineCluster:
       _.map(result => if result then "Yup" else "Nope")
     }
 
-given ec: ExecutionContext = ExecutionContext.fromExecutorService(
-  Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors())
-)
-
 @main def testMultiMachineCluster(): Unit =
+  given ec: ExecutionContext = ExecutionContext.fromExecutorService(
+    Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors())
+  )
+
   MultiMachineCluster
     .generateTrafficSpikeReport(
       "server1.rockthejvm.com",
