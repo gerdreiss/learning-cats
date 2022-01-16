@@ -34,14 +34,14 @@ object MultiMachineCluster:
 
   def generateTrafficSpikeReport(server1: String, server2: String): AsyncResponse[String] =
     canWithstandSurge(server1, server2).transform {
-      _.map(result => if result then "Yup" else "Nope")
+      _.map(if _ then "Yup" else "Nope")
     }
 
 @main def testMultiMachineCluster(): Unit =
   MultiMachineCluster
     .generateTrafficSpikeReport(
       "server1.rockthejvm.com",
-      "server3.rockthejvm.com"
+      "server5.rockthejvm.com"
     )
     .value
     .onComplete {
