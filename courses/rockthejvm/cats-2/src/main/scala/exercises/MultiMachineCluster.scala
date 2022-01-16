@@ -7,6 +7,10 @@ import java.util.concurrent.Executors
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success }
 
+given ec: ExecutionContext = ExecutionContext.fromExecutorService(
+  Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors())
+)
+
 object MultiMachineCluster:
 
   val bandwidths = Map(
@@ -19,8 +23,8 @@ object MultiMachineCluster:
 
   def getBandwidth(server: String): AsyncResponse[Int] =
     bandwidths.get(server) match
-      case Some(bandwidth) => EitherT(Future(Right(bandwidth)))
-      case None            => EitherT(Future(Left("server unreachable")))
+      case Some(bandwidth) => EitherT.right(Future(bandwidth))
+      case None            => EitherT.left(Future("server unreachable"))
 
   def canWithstandSurge(server1: String, server2: String): AsyncResponse[Boolean] =
     for
@@ -34,10 +38,6 @@ object MultiMachineCluster:
     }
 
 @main def testMultiMachineCluster(): Unit =
-  given ec: ExecutionContext = ExecutionContext.fromExecutorService(
-    Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors())
-  )
-
   MultiMachineCluster
     .generateTrafficSpikeReport(
       "server1.rockthejvm.com",
