@@ -42,14 +42,16 @@ object Evaluations extends App:
 
   val tutorial = Eval
     .always {
-      println("Step 1..."); "put the guitar on your lap"
+      println("Step 1...")
+      "put the guitar on your lap"
     }
     .map { step1 =>
-      println("Step 2..."); s"$step1, then put your left hand on the neck"
+      println("Step 2...")
+      s"$step1, then put your left hand on the neck"
     }
     .memoize
     .map { stepsOneAndTwo =>
-      println("Step 3, more complicated");
+      println("Step 3, more complicated")
       s"$stepsOneAndTwo, then with the right hand strike the strings"
     }
 
@@ -74,5 +76,5 @@ object Evaluations extends App:
     if ts.isEmpty then Eval.later(ts)
     else Eval.defer(reverseEval(ts.tail).map(_ :+ ts.head))
 
-  //println(reverseList((1 to 10000).toList))
+  // println(reverseList((1 to 10000).toList))
   println(reverseEval((1 to 10000).toList).value)
