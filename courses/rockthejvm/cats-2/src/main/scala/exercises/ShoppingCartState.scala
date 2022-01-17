@@ -25,4 +25,6 @@ object ShoppingCartState extends App:
       total <- addToCart("Item3", 199.90)
     yield total
 
-  println(resultState.run(summon[Monoid[ShoppingCart]].empty).value)
+  val (state, result)  = resultState.run(summon[Monoid[ShoppingCart]].empty).value
+  println(state)
+  println(result)

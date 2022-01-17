@@ -28,4 +28,4 @@ object MentalGymnastics extends App:
     c <- inspect[Int, Int](_ * 2)
   yield (a, b, c)
 
-  println(program.run(10).value)
+  println(program.runA(10).value)
