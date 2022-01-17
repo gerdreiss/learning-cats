@@ -17,7 +17,7 @@ object Readers extends App:
       numThreads: Int
   )
 
-  class DbConn(username: String, password: String):
+  class DbService(username: String, password: String):
     def getOrderStatus(orderId: Long): String = "dispatched"
     def getLastOrderId(username: String): Long = Random.nextLong()
 
@@ -37,8 +37,8 @@ object Readers extends App:
       8080,
       Runtime.getRuntime.availableProcessors()
     )
-  val dbReader: Reader[Config, DbConn] = Reader(conf => DbConn(conf.dbUsername, conf.dbPassword))
-  val dbConn: Id[DbConn] = dbReader.run(config)
+  val dbReader: Reader[Config, DbService] = Reader(conf => DbService(conf.dbUsername, conf.dbPassword))
+  val dbConn: Id[DbService] = dbReader.run(config)
   val emailReader: Reader[Config, EmailService] = Reader(config => EmailService(config.replyTo))
   val emailService: Id[EmailService] = emailReader.run(config)
 
