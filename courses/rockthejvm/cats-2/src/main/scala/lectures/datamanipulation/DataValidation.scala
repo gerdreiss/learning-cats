@@ -4,6 +4,7 @@ import cats.Monoid
 import cats.data.Validated
 import cats.syntax.semigroup.*
 import cats.syntax.traverse.*
+import scala.util.Try
 
 object DataValidation extends App:
 
@@ -53,3 +54,19 @@ object DataValidation extends App:
 
   println(validateNumberViaEither(201))
   println(validateNumberViaValidated(201))
+
+  // some usage examples
+  val andThenned  = validValue.andThen(_ => invalidValue)
+  val ensured     = validValue.ensure(List("invalid value"))(_ % 2 == 0)
+  val transformed = validValue.map(_ + 1)
+  val bimapped    = validValue.bimap(_.toUpperCase, _ + 1)
+
+  val eitherToValidated: Validated[List[String], Int] =
+    Validated.fromEither(Right(42))
+  val optionToValidated: Validated[List[String], Int] =
+    Validated.fromOption(Some(42), List("missing value"))
+  val tryToValidated: Validated[Throwable, Int] =
+    Validated.fromTry(Try("a".toInt))
+
+  validValue.toOption
+  validValue.toEither
