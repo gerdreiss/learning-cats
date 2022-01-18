@@ -7,6 +7,7 @@ object FunctionalState extends App:
   type FunkyState[S, A] = S => (S, A)
 
   val countAndSay: State[Int, String] = State(cnt => (cnt + 1, s"Counted $cnt"))
+
   val (eleven, counted10) = countAndSay.run(10).value
 
   // state = "iterative" computations
@@ -30,10 +31,9 @@ object FunctionalState extends App:
   }
 
   val forComprehendedTransformation = for
-    first <- firstTransformation
+    first  <- firstTransformation
     second <- secondTransformation
   yield (first, second)
 
   println(compositeTransformation.run(10).value)
   println(forComprehendedTransformation.run(10).value)
-

@@ -40,7 +40,8 @@ object DataValidation extends App:
       .swap
 
   def validateNumberViaValidated(n: Int): Validated[List[String], Int] =
-    // we have to override the standard Monoid instance for ints because otherwise we'll get 4 x n
+    // we have to override the standard Monoid instance for ints
+    // because otherwise we'll get 4 x n further below, if all validations are successful
     given Monoid[Int] with
       def empty: Int                   = 0
       def combine(x: Int, y: Int): Int = x
