@@ -18,7 +18,7 @@ object Readers extends App:
   )
 
   class DbService(username: String, password: String):
-    def getOrderStatus(orderId: Long): String = "dispatched"
+    def getOrderStatus(orderId: Long): String  = "dispatched"
     def getLastOrderId(username: String): Long = Random.nextLong()
 
   class HttpService(host: String, port: Int):
@@ -37,23 +37,24 @@ object Readers extends App:
       8080,
       Runtime.getRuntime.availableProcessors()
     )
-  val dbReader: Reader[Config, DbService] = Reader(conf => DbService(conf.dbUsername, conf.dbPassword))
-  val dbConn: Id[DbService] = dbReader.run(config)
+  val dbReader: Reader[Config, DbService] =
+    Reader(conf => DbService(conf.dbUsername, conf.dbPassword))
+  val dbConn: Id[DbService]                     = dbReader.run(config)
   val emailReader: Reader[Config, EmailService] = Reader(config => EmailService(config.replyTo))
-  val emailService: Id[EmailService] = emailReader.run(config)
+  val emailService: Id[EmailService]            = emailReader.run(config)
 
   // Reader[I, O]
-  val orderStatusReader: Reader[Config, String] = dbReader.map(dbConn => dbConn.getOrderStatus(42))
-  val orderStatus = dbReader.run(config)
+  val orderStatusReader: Reader[Config, String] = dbReader.map(_.getOrderStatus(42))
+  val orderStatus                               = dbReader.run(config)
 
   def getLastOrderStatus(username: String): Reader[Config, String] =
     dbReader
-      .map(dbConn => dbConn.getLastOrderId(username))
+      .map(_.getLastOrderId(username))
       .flatMap(orderId => dbReader.map(_.getOrderStatus(orderId)))
 
   def getLastOrderStatusFor(user: String): Reader[Config, String] =
     for
-      orderId <- dbReader.map(_.getLastOrderId(user))
+      orderId     <- dbReader.map(_.getLastOrderId(user))
       orderStatus <- dbReader.map(_.getOrderStatus(orderId))
     yield orderStatus
 
