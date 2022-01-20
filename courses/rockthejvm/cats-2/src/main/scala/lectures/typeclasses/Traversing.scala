@@ -1,13 +1,8 @@
 package lectures.typeclasses
 
-import cats.Applicative
-import cats.Monad
-import cats.Traverse
-import cats.syntax.applicative.*
-import cats.syntax.apply.*
-import cats.syntax.flatMap.*
-import cats.syntax.functor.*
-import cats.syntax.traverse.*
+import cats.*
+import cats.data.*
+import cats.syntax.all.*
 
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
@@ -59,3 +54,17 @@ object Traversing extends App:
     fas.foldRight(List.empty[A].pure[F])((_, _).mapN(_ :: _))
 
   println(listSequenceContextBoundApplicative(List(Option(1), Option(2), Option(3))))
+
+  def filterAsOption(nums: List[Int])(p: Int => Boolean): Option[List[Int]] =
+    listTraverseContextBoundApplicative[Option, Int, Int](nums)(n => Option(n).filter(p))
+
+  println(filterAsOption(List(2, 4, 6))(_ % 2 == 0))
+  println(filterAsOption(List(1, 2, 3))(_ % 2 == 0))
+
+  type InvalidOr[T] = Validated[List[String], T]
+
+  def filterAsValidated(nums: List[Int])(p: Int => Boolean): InvalidOr[List[Int]] =
+    nums.traverse(n => Validated.cond(p(n), n, List(s"invalid number: $n")))
+
+  println(filterAsValidated(List(2, 4, 6))(_ % 2 == 0))
+  println(filterAsValidated(List(1, 2, 3))(_ % 2 == 0))
