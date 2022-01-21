@@ -6,6 +6,7 @@ import cats.effect.implicits.*
 import cats.syntax.apply.*
 import cats.syntax.flatMap.*
 import cats.syntax.parallel.*
+import utils.*
 
 object ParallelismIO extends IOApp.Simple:
 
@@ -16,14 +17,6 @@ object ParallelismIO extends IOApp.Simple:
     ani    <- anisIO
     kamran <- kamranIO
   yield s"$ani and $kamran love Rock the JVM"
-
-  extension [A](ioa: IO[A])
-    def debug: IO[A] =
-      // for
-      //   a <- ioa
-      //   _ <- IO.println(s"[${Thread.currentThread.getName}] $a")
-      // yield a
-      ioa.flatMap(a => IO.println(s"[${Thread.currentThread.getName}] $a").as(a))
 
   val fail = IO.raiseError(java.lang.RuntimeException("meh")).debug
 
