@@ -13,23 +13,23 @@ trait Combiner[A]:
   def combine(x: A, y: A): A
   def empty: A
 
-def combineAll[A](values: List[A])(using combiner: Combiner[A]): A =
-  values.foldLeft(combiner.empty)(combiner.combine)
+def combineAll[A](values: List[A])(using C: Combiner[A]): A =
+  values.foldLeft(C.empty)(C.combine)
 
 given Combiner[Int] with
   def combine(x: Int, y: Int): Int = x + y
   def empty: Int                   = 0
 
 // synthesize given instances
-given optionCombiner[T](using combiner: Combiner[T]): Combiner[Option[T]] with
+given optionCombiner[T](using C: Combiner[T]): Combiner[Option[T]] with
   def combine(x: Option[T], y: Option[T]): Option[T] =
     (x, y) match
-      case (Some(valX), Some(valY)) => Some(combiner.combine(valX, valY))
+      case (Some(valX), Some(valY)) => Some(C.combine(valX, valY))
       case (Some(valX), _)          => Some(valX)
       case (_, Some(valY))          => Some(valY)
-      case _                        => Some(combiner.empty)
+      case _                        => Some(C.empty)
 
-  def empty: Option[T] = Some(combiner.empty)
+  def empty: Option[T] = Some(C.empty)
 
 // extension methods
 case class Person(name: String):
@@ -38,8 +38,8 @@ case class Person(name: String):
 extension (name: String) def greet: String = s"Hi, my name is $name"
 
 extension [T](ts: List[T])
-  def reduceThat(using combiner: Combiner[T]): T =
-    ts.foldLeft(combiner.empty)(combiner.combine)
+  def reduceThat(using C: Combiner[T]): T =
+    ts.foldLeft(C.empty)(C.combine)
 
 // type classes
 
@@ -64,12 +64,12 @@ given JsonSer[Person2] with
         |}""".stripMargin
 
 // Part 3: user-facing API
-def mkJson[T](value: T)(using serializer: JsonSer[T]): String =
-  serializer.toJson(value)
+def mkJson[T](value: T)(using S: JsonSer[T]): String =
+  S.toJson(value)
 
 extension [T](ts: List[T])
-  def mkJson(using serializer: JsonSer[T]): String =
-    ts.map(t => serializer.toJson(t)).mkString("[", ",\n", "]")
+  def mkJson(using S: JsonSer[T]): String =
+    ts.map(t => S.toJson(t)).mkString("[", ",\n", "]")
 
 @main def ContextualAbstractions(): Unit =
   println(combineAll(List(1, 2, 3, 5)))
