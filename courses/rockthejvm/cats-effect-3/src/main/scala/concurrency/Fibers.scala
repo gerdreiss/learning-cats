@@ -50,7 +50,7 @@ object Fibers extends IOApp.Simple:
   }
 
   def throwOnAnotherThread = for
-    fib    <- IO.raiseError[Int](java.lang.RuntimeException("Boom!")).start
+    fib    <- IO.raiseError[Int](RuntimeException("Boom!")).start
     result <- fib.join
   yield result
 
@@ -76,11 +76,11 @@ object Fibers extends IOApp.Simple:
 
   def ioTupleG[A, B](ioa: IO[A], iob: IO[B]): IO[(A, B)] =
     (for
-      fioa <- ioa.start
-      fiob <- iob.start
-      oioa <- fioa.join
-      oiob <- fiob.join
-    yield (oioa, oiob))
+      fibA <- ioa.start
+      fibB <- iob.start
+      outA <- fibA.join
+      outB <- fibB.join
+    yield (outA, outB))
       .flatMap {
         case (Succeeded(ioa), Succeeded(iob)) => (ioa, iob).mapN((_, _))
         case (Errored(e), _)                  => IO.raiseError(e)

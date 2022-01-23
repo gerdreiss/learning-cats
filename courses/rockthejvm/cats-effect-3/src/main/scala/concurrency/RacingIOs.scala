@@ -77,7 +77,9 @@ object RacingIOs extends IOApp.Simple:
   def unraceDan[A, B](ioa: IO[A], iob: IO[B]): IO[Either[A, B]] = unraceG(ioa, iob)
 
   // race in terms of racePair
-  def simpleRaceG[A, B](ioa: IO[A], iob: IO[B]): IO[Either[A, B]]   =
+  // my implementation is wrong
+  // it doesn't take the effect cancelling order
+  def simpleRaceG[A, B](ioa: IO[A], iob: IO[B]): IO[Either[A, B]] =
     IO.racePair(ioa, iob).flatMap {
       case Left((outcomeA, fiberB))  =>
         fiberB.cancel >> {
@@ -94,6 +96,7 @@ object RacingIOs extends IOApp.Simple:
             case Canceled()   => IO.raiseError(TimeoutException())
         }
     }
+
   def simpleRaceDan[A, B](ioa: IO[A], iob: IO[B]): IO[Either[A, B]] =
     IO.racePair(ioa, iob).flatMap {
       case Left((outcomeA, fiberB))  =>

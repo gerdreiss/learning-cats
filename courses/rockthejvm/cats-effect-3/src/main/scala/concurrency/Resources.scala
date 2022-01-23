@@ -64,9 +64,10 @@ object Resources extends IOApp.Simple:
     IO(Scanner(io.Source.fromFile(path).reader))
       .bracket { scanner =>
         // acquire a connection
-        IO(Conn(scanner.nextLine)).bracket { conn =>
-          conn.open() *> IO.never
-        }(conn => conn.close().void)
+        IO(Conn(scanner.nextLine))
+          .bracket { conn =>
+            conn.open() *> IO.never
+          }(conn => conn.close().void)
       }(scanner => IO(scanner.close))
 
   val connectionResource = Resource.make(IO(Conn("localhost")))(_.close().void)
@@ -78,7 +79,7 @@ object Resources extends IOApp.Simple:
   yield ()
 
   // resources are equivalent to brackets
-  val simpleResource                      = IO("some resource")
+  val simpleResource: IO[String]          = IO("some resource")
   val usingResource: String => IO[String] = s => IO(s"using the string: $s").debug
   val releaseResource: String => IO[Unit] = s => IO(s"finalizing the string: $s").debug.void
 
