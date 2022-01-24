@@ -94,6 +94,7 @@ object CancellingIO extends IOApp.Simple:
    * Poll calls are "gaps opened" in the uncancellable region.
    */
 
+  // EXERCISES
   // 1
   val cancelBeforeEffect = IO.canceled >> IO.pure(42).debug
   val uncancelableEffect = IO.uncancelable(_ => cancelBeforeEffect)
