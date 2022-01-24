@@ -1,7 +1,6 @@
 package concurrency
 
-import cats.effect.IO
-import cats.effect.IOApp
+import cats.effect.*
 import cats.syntax.applicative.*
 import utils.*
 
