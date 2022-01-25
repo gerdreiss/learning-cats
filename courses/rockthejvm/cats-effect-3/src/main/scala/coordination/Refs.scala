@@ -49,6 +49,7 @@ object Refs extends IOApp.Simple:
 
   // exercises
   def tickingClockG: IO[Unit] =
+    // this reference is never updated because (see below)
     val ticks: IO[Ref[IO, Int]] = Ref[IO].of(0)
 
     def tickingClock: IO[Unit] =
@@ -62,7 +63,9 @@ object Refs extends IOApp.Simple:
     def printTicks: IO[Unit] =
       for
         _ <- IO.sleep(5.seconds)
-        _ <- ticks.flatMap(_.modify(ts => (ts, s"TICKS: $ts"))).debug
+        _ <- ticks
+               .flatMap(_.modify(ts => (ts, s"TICKS: $ts")))
+               .debug // new reference, the original is never updated
         _ <- printTicks
       yield ()
 
@@ -82,7 +85,7 @@ object Refs extends IOApp.Simple:
       for
         _  <- IO.sleep(5.seconds)
         ts <- ticks.get
-        _  <- IO(s"TICKS: $ts").debug
+        _  <- IO(s"TICKS: $ts").debug // new reference, the original is never updated
         _  <- printTicks(ticks)
       yield ()
 
@@ -92,12 +95,12 @@ object Refs extends IOApp.Simple:
     yield ()
 
   def tickingClockWeird: IO[Unit] =
-    // this reference is never updated because
+    // this reference is never updated because (see below)
     val ticks: IO[Ref[IO, Int]] = Ref[IO].of(0)
 
     def tickingClock: IO[Unit] =
       for
-        ts <- ticks // new reference
+        ts <- ticks // new reference, the original is never updated
         _  <- IO.sleep(1.second)
         _  <- IO(System.currentTimeMillis).debug
         _  <- ts.update(_ + 1)
@@ -106,7 +109,7 @@ object Refs extends IOApp.Simple:
 
     def printTicks: IO[Unit] =
       for
-        ts     <- ticks // new reference
+        ts     <- ticks // new reference, the original is never updated
         _      <- IO.sleep(5.seconds)
         currTs <- ts.get
         _      <- IO(currTs, s"TICKS: $currTs").debug
