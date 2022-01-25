@@ -2,6 +2,7 @@ package coordination
 
 import cats.effect.*
 import cats.syntax.parallel.*
+import scala.concurrent.duration.*
 import utils.*
 
 object Refs extends IOApp.Simple:
@@ -18,7 +19,7 @@ object Refs extends IOApp.Simple:
   // updating with a function
   val ioUpdateRef42: IO[Unit] = ioRef42.flatMap(_.update(_ * 2))
 
-  val tenfoldIoRef42: IO[Int] = ioRef42.flatMap(_.updateAndGet(_ * 10))
+  val tenfoldIoRef420: IO[Int] = ioRef42.flatMap(_.updateAndGet(_ * 10))
 
   // modifying with a function returning a diff type
   val ioRefModified42: IO[String] =
@@ -46,4 +47,73 @@ object Refs extends IOApp.Simple:
                         .parSequence
     yield ()
 
-  override def run = concurrentWork
+  // exercises
+  def tickingClockG: IO[Unit] =
+    val ticks: IO[Ref[IO, Int]] = Ref[IO].of(0)
+
+    def tickingClock: IO[Unit] =
+      for
+        _ <- IO.sleep(1.second)
+        _ <- IO(System.currentTimeMillis).debug
+        _ <- ticks.flatMap(_.updateAndGet(_ + 1))
+        _ <- tickingClock
+      yield ()
+
+    def printTicks: IO[Unit] =
+      for
+        _ <- IO.sleep(5.seconds)
+        _ <- ticks.flatMap(_.modify(ts => (ts, s"TICKS: $ts"))).debug
+        _ <- printTicks
+      yield ()
+
+    for _ <- (tickingClock, printTicks).parTupled
+    yield ()
+
+  def tickingClockDan: IO[Unit] =
+    def tickingClock(ticks: Ref[IO, Int]): IO[Unit] =
+      for
+        _ <- IO.sleep(1.second)
+        _ <- IO(System.currentTimeMillis).debug
+        _ <- ticks.update(_ + 1) // thread safe update
+        _ <- tickingClock(ticks)
+      yield ()
+
+    def printTicks(ticks: Ref[IO, Int]): IO[Unit] =
+      for
+        _  <- IO.sleep(5.seconds)
+        ts <- ticks.get
+        _  <- IO(s"TICKS: $ts").debug
+        _  <- printTicks(ticks)
+      yield ()
+
+    for
+      tickRef <- Ref[IO].of(0)
+      _       <- (tickingClock(tickRef), printTicks(tickRef)).parTupled
+    yield ()
+
+  def tickingClockWeird: IO[Unit] =
+    // this reference is never updated because
+    val ticks: IO[Ref[IO, Int]] = Ref[IO].of(0)
+
+    def tickingClock: IO[Unit] =
+      for
+        ts <- ticks // new reference
+        _  <- IO.sleep(1.second)
+        _  <- IO(System.currentTimeMillis).debug
+        _  <- ts.update(_ + 1)
+        _  <- tickingClock
+      yield ()
+
+    def printTicks: IO[Unit] =
+      for
+        ts     <- ticks // new reference
+        _      <- IO.sleep(5.seconds)
+        currTs <- ts.get
+        _      <- IO(currTs, s"TICKS: $currTs").debug
+        _      <- printTicks
+      yield ()
+
+    for _ <- (tickingClock, printTicks).parTupled
+    yield ()
+
+  override def run = tickingClockWeird
