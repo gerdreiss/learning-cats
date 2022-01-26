@@ -43,13 +43,21 @@ object Mutex:
        *     complete it (thereby unblocking a fiber waiting on it)
        */
       override def release: IO[Unit] =
-        state.modify {
-          case State(false, _)    => unlocked -> IO.unit
-          case State(true, queue) =>
-            if queue.isEmpty then unlocked -> IO.unit
-            else
-              val (signal, rest) = queue.dequeue
-              State(locked = true, rest) -> signal.complete(()).void
+        // Dan's solution
+        // state.modify {
+        //   case State(false, _)    => unlocked -> IO.unit
+        //   case State(true, queue) =>
+        //     if queue.isEmpty then unlocked -> IO.unit
+        //     else
+        //       val (signal, rest) = queue.dequeue
+        //       State(locked = true, rest) -> signal.complete(()).void
+        // }.flatten
+        // my solution
+        state.modify { s =>
+          if s.locked && s.waiting.nonEmpty then
+            val (signal, rest) = s.waiting.dequeue
+            State(locked = true, rest) -> signal.complete(()).void
+          else s -> IO.unit
         }.flatten
   }
 
