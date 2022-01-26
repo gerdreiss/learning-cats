@@ -1,16 +1,16 @@
 package coordination
 
 import cats.effect.*
-import utils.*
-import scala.concurrent.duration.*
 import cats.syntax.traverse.*
+import utils.*
+
+import scala.concurrent.duration.*
 
 object Defers extends IOApp.Simple:
 
-  val deferred: IO[Deferred[IO, Int]]   = Deferred[IO, Int]
-  val deferredIO: IO[Deferred[IO, Int]] = IO.deferred[Int]
+  val deferredIO: IO[Deferred[IO, Int]] = Deferred[IO, Int] // or IO.deferred[Int]
 
-  // get blocks the calling fiber (semantically)
+  // .get blocks the calling fiber (semantically)
   // until some other fiber completes the Deferred with a value
 
   val writer: IO[Boolean] = deferredIO.flatMap(_.complete(42))
@@ -105,4 +105,59 @@ object Defers extends IOApp.Simple:
       _          <- fileTasks.join
     yield ()
 
-  override def run = fileNotifierWithDeferred
+  // exercises
+  // 1
+  def eggBoiler: IO[Unit] =
+    def eggReadyNotification(signal: Deferred[IO, Unit]): IO[Unit] =
+      for
+        _ <- IO("Egg boiling on some other fiber, waiting...").debug
+        _ <- signal.get
+        _ <- IO("Egg ready").debug
+      yield ()
+
+    def tickingClock(ticks: Ref[IO, Int], signal: Deferred[IO, Unit]): IO[Unit] =
+      for
+        _     <- IO.sleep(1.second)
+        count <- ticks.updateAndGet(_ + 1)
+        _     <- IO(count).debug
+        _     <- if count == 10 then signal.complete(()) else tickingClock(ticks, signal)
+      yield ()
+
+    for
+      counter  <- Ref[IO].of(0)
+      signal   <- Deferred[IO, Unit]
+      notifier <- eggReadyNotification(signal).start
+      clock    <- tickingClock(counter, signal).start
+      _        <- notifier.join
+      _        <- clock.join
+    yield ()
+
+  // 2
+  type RaceResult[A, B] = Either[
+    (Outcome[IO, Throwable, A], Fiber[IO, Throwable, B]), // (winner result, loser fiber)
+    (Fiber[IO, Throwable, A], Outcome[IO, Throwable, B])  // (loser fiber, winner result)
+  ]
+
+  type EitherOutcome[A, B] = Either[Outcome[IO, Throwable, A], Outcome[IO, Throwable, B]]
+
+  def racePairViaDeferred[A, B](ioa: IO[A], iob: IO[B]): IO[RaceResult[A, B]] =
+    IO.uncancelable { poll =>
+      for
+        signal <- Deferred[IO, EitherOutcome[A, B]]
+        fibA   <- ioa.guaranteeCase(outcomeA => signal.complete(Left(outcomeA)).void).start
+        fibB   <- iob.guaranteeCase(outcomeB => signal.complete(Right(outcomeB)).void).start
+        result <- poll(signal.get) // Blocking call - should be cancellable
+                    .onCancel {
+                      for
+                        cancelFibA <- fibA.cancel.start
+                        cancelFibB <- fibB.cancel.start
+                        _          <- cancelFibA.join
+                        _          <- cancelFibB.join
+                      yield ()
+                    }
+      yield result match
+        case Left(outcomeA)  => Left((outcomeA, fibB))
+        case Right(outcomeB) => Right((fibA, outcomeB))
+    }
+
+  override def run = eggBoiler
