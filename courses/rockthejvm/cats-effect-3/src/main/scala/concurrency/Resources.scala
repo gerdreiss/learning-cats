@@ -17,14 +17,14 @@ object Resources extends IOApp.Simple:
     def open(): IO[String]  = IO(s"Opening connection to $url").debug
     def close(): IO[String] = IO(s"Closing to connection to $url").debug
 
-  val LeakyAsyncFetchUrl =
+  val LeakyAsyncFetchUrl: IO[Unit] =
     for
       // this connection might get leaked after cancelling this fiber
       fib <- (Conn("rockthejvm.com").open() *> IO.sleep(Int.MaxValue.seconds)).start
       _   <- IO.sleep(1.second) *> fib.cancel
     yield ()
 
-  val correctAsyncFetchUrl =
+  val correctAsyncFetchUrl: IO[Unit] =
     for
       conn <- IO(Conn("rockthejvm.com"))
       // this connection might get leaked after cancelling this fiber
@@ -33,10 +33,10 @@ object Resources extends IOApp.Simple:
     yield ()
 
   // bracket pattern
-  val bracketFetchUrl = IO(Conn("rockthejvm.com"))
+  val bracketFetchUrl: IO[Unit] = IO(Conn("rockthejvm.com"))
     .bracket(_.open() *> IO.sleep(Int.MaxValue.seconds))(_.close().void)
 
-  val brackettedProgram = for
+  val brackettedProgram: IO[Unit] = for
     fib <- bracketFetchUrl.start
     _   <- IO.sleep(1.second) *> fib.cancel
   yield ()
@@ -70,10 +70,10 @@ object Resources extends IOApp.Simple:
           }(conn => conn.close().void)
       }(scanner => IO(scanner.close))
 
-  val connectionResource = Resource.make(IO(Conn("localhost")))(_.close().void)
+  val connectionResource: Resource[IO, Conn] = Resource.make(IO(Conn("localhost")))(_.close().void)
 
   // ... at a later part in code
-  val resourceFetchUrl = for
+  val resourceFetchUrl: IO[Unit] = for
     fib <- connectionResource.use(conn => conn.open() *> IO.never).start
     _   <- IO.sleep(1.second) *> fib.cancel
   yield ()
@@ -83,14 +83,14 @@ object Resources extends IOApp.Simple:
   val usingResource: String => IO[String] = s => IO(s"using the string: $s").debug
   val releaseResource: String => IO[Unit] = s => IO(s"finalizing the string: $s").debug.void
 
-  val usingResourceWithBracket  = simpleResource.bracket(usingResource)(releaseResource)
-  val usingResourceWithResource = Resource.make(simpleResource)(releaseResource).use(usingResource)
+  val usingResourceWithBracket: IO[String] = simpleResource.bracket(usingResource)(releaseResource)
+  val usingResourceWithResource: IO[String] = Resource.make(simpleResource)(releaseResource).use(usingResource)
 
   def readFileViaResource(path: String): IO[Unit] =
     IO(s"opening file $path using resource").debug *>
       Resource
         .make(IO(Scanner(FileReader(File(path))))) { scanner =>
-          IO(s"close file").debug *> IO(scanner.close)
+          IO(s"close file").debug *> IO(scanner.close())
         }
         .use { scanner =>
           def printNextLine: IO[Unit] =
@@ -102,10 +102,10 @@ object Resources extends IOApp.Simple:
         }
 
   // nested resources
-  def connectionFromConfigurationResource(config: String) =
+  def connectionFromConfigurationResource(config: String): IO[Nothing] =
     Resource
       .make(IO(Scanner(FileReader(File(config))))) { scanner =>
-        IO(s"close file").debug *> IO(scanner.close)
+        IO(s"close file").debug *> IO(scanner.close())
       }
       .flatMap { scanner =>
         Resource.make(IO(Conn(scanner.nextLine)))(_.close().void)
@@ -114,9 +114,9 @@ object Resources extends IOApp.Simple:
         conn.open() *> IO.never
       }
 
-  def cancelReadFile(path: String) = for
+  def cancelReadFile(path: String): IO[Unit] = for
     fib <- connectionFromConfigurationResource(path).start
     _   <- IO.sleep(2.seconds) >> fib.cancel
   yield ()
 
-  override def run = cancelReadFile("src/main/scala/concurrency/Resources.scala")
+  override def run: IO[Unit] = cancelReadFile("src/main/scala/concurrency/Resources.scala")

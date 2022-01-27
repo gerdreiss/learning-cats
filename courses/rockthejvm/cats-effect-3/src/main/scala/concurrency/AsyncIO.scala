@@ -2,11 +2,12 @@ package concurrency
 
 import cats.effect.*
 
-import java.util.concurrent.Executors
+import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
 import scala.util.Try
 import utils.*
+
 import scala.concurrent.Future
 
 object AsyncIO extends IOApp.Simple:
@@ -15,12 +16,12 @@ object AsyncIO extends IOApp.Simple:
   // without having to manually manage the fiber lifecycle
   given ec: ExecutionContext = ExecutionContext.fromExecutorService(threadpool)
 
-  val threadpool = Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors)
+  val threadpool: ExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors)
 
   type ErrorOr[A]  = Either[Throwable, A]
   type Callback[A] = ErrorOr[A] => Unit
 
-  def meaningOfLifeFunction =
+  def meaningOfLifeFunction: Int =
     Thread.sleep(1000)
     println(
       s"[${Thread.currentThread.getName}] computing meaning of life on some other thread..."
@@ -30,7 +31,7 @@ object AsyncIO extends IOApp.Simple:
   def computeMeaningOfLife: ErrorOr[Int] = Try(meaningOfLifeFunction).toEither
 
   // this is useless since we can't get hold of the result of the computation
-  def computeMeaningOfLifeOnThreadpool: Unit =
+  def computeMeaningOfLifeOnThreadpool(): Unit =
     threadpool.execute(() => computeMeaningOfLife)
 
   // lift an async computation to an IO
@@ -79,15 +80,15 @@ object AsyncIO extends IOApp.Simple:
   /**
    * FULL FUNC CALL
    */
-  def demoAsyncCancellation =
+  def demoAsyncCancellation: IO[Nothing] =
     val finalizer: Option[IO[Unit]]   = Some(IO("Cancelled").debug.void)
     val asyncMeaningOfLifeIO: IO[Int] = IO.async { (callback: Callback[Int]) =>
       /**
-           * finalizer in case a computation gets cancelled
-           * finalizers are of type IO[Unit]
-           * not specifying a finalizer => Option[IO[Unit]]
-           * creating Option is an effect, so we need an effect => IO[Option[IO[Unit]]]
-           */
+       * finalizer in case a computation gets cancelled
+       * finalizers are of type IO[Unit]
+       * not specifying a finalizer => Option[IO[Unit]]
+       * creating Option is an effect, so we need an effect => IO[Option[IO[Unit]]]
+       */
       // we have to return IO[Option[IO[Unit]]]
       IO {
         threadpool.execute { () =>
@@ -110,8 +111,8 @@ object AsyncIO extends IOApp.Simple:
       _   <- fib.join
     yield ()
 
-  override def run =
+  override def run: IO[Unit] =
     // asyncMeaningOfLife.debug >> IO(threadpool.shutdown())
     // asyncToIO_G(() => meaningOfLifeFunction)(ec).debug.void
     // asyncToIO_Dan(() => meaningOfLifeFunction).debug.void
-    demoAsyncCancellation.debug >> IO(threadpool.shutdown)
+    demoAsyncCancellation.debug >> IO(threadpool.shutdown())

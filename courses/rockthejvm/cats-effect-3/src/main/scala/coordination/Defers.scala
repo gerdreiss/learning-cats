@@ -22,8 +22,8 @@ object Defers extends IOApp.Simple:
       for
         _   <- IO("[producer] crunching numbers...").debug
         _   <- IO.sleep(1.second)
-        _   <- IO("[producer] complete: 42").debug
         msg <- IO(42)
+        _   <- IO(s"[producer] complete: $msg").debug
         _   <- signal.complete(msg)
       yield ()
 
