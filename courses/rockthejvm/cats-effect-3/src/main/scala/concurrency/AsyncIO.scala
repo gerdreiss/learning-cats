@@ -2,7 +2,7 @@ package concurrency
 
 import cats.effect.*
 
-import java.util.concurrent.{ExecutorService, Executors}
+import java.util.concurrent.{ Executors, ExecutorService }
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
 import scala.util.Try
@@ -16,7 +16,8 @@ object AsyncIO extends IOApp.Simple:
   // without having to manually manage the fiber lifecycle
   given ec: ExecutionContext = ExecutionContext.fromExecutorService(threadpool)
 
-  val threadpool: ExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors)
+  val threadpool: ExecutorService =
+    Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors)
 
   type ErrorOr[A]  = Either[Throwable, A]
   type Callback[A] = ErrorOr[A] => Unit
@@ -80,7 +81,7 @@ object AsyncIO extends IOApp.Simple:
   /**
    * FULL FUNC CALL
    */
-  def demoAsyncCancellation: IO[Nothing] =
+  def demoAsyncCancellation: IO[Unit] =
     val finalizer: Option[IO[Unit]]   = Some(IO("Cancelled").debug.void)
     val asyncMeaningOfLifeIO: IO[Int] = IO.async { (callback: Callback[Int]) =>
       /**
