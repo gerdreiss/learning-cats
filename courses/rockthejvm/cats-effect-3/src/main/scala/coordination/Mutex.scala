@@ -1,6 +1,7 @@
 package coordination
 
 import cats.effect.*
+import cats.effect.kernel.Outcome.*
 import cats.syntax.parallel.*
 import utils.*
 
@@ -19,7 +20,7 @@ object Mutex:
 
   val unlocked = State(locked = false, Queue.empty)
 
-  def create: IO[Mutex] = Ref[IO].of(unlocked).map { state =>
+  def createSimpleMutex(state: Ref[IO, State]): Mutex =
     new:
       /**
        * Change the state of the Ref:
@@ -27,11 +28,19 @@ object Mutex:
        * - if the mutex is locked, state becomes (true, queue + new signal) AND WAIT ON THAT SIGNAL
        */
       override def acquire: IO[Unit] =
+        // Dan's solution
+        // IO.deferred[Unit].flatMap { signal =>
+        //   state.modify {
+        //     case State(false, _)    => State(locked = true, Queue.empty)           -> IO.unit
+        //     case State(true, queue) => State(locked = true, queue.enqueue(signal)) -> signal.get
+        //   }.flatten
+        // }
+        // my solution
         IO.deferred[Unit].flatMap { signal =>
-          state.modify {
-            case State(false, _)    => State(locked = true, Queue.empty)           -> IO.unit
-            case State(true, queue) => State(locked = true, queue.enqueue(signal)) -> signal.get
-          }.flatten
+          state.modify { s =>
+            if s.locked then s.copy(waiting = s.waiting.enqueue(signal)) -> signal.get
+            else State(locked = true, waiting = Queue.empty)             -> IO.unit
+          }
         }
 
       /**
@@ -59,7 +68,39 @@ object Mutex:
             State(locked = true, rest) -> signal.complete(()).void
           else s -> IO.unit
         }.flatten
-  }
+
+  def createMutexWithCancellation(state: Ref[IO, State]): Mutex =
+    new:
+      override def acquire: IO[Unit] = IO.uncancelable { poll =>
+        IO.deferred[Unit].flatMap { signal =>
+          val cleanup = state.modify { s =>
+            s.copy(waiting = s.waiting.filterNot(_ eq signal)) -> release
+          // case State(locked, queue) =>
+          //   val newQueue = queue.filterNot(_ eq signal)
+          //   State(locked, newQueue) -> release
+          }.flatten
+
+          state.modify {
+            case State(false, _)    =>
+              State(locked = true, Queue.empty) -> IO.unit
+            case State(true, queue) =>
+              State(locked = true, queue.enqueue(signal)) -> poll(signal.get).onCancel(cleanup)
+          }.flatten
+        }
+      }
+
+      override def release: IO[Unit] =
+        state.modify { // modify is already cancellation-aware, no need to do anything
+          case State(false, _)    => unlocked -> IO.unit
+          case State(true, queue) =>
+            if queue.isEmpty then unlocked -> IO.unit
+            else
+              val (signal, rest) = queue.dequeue
+              State(locked = true, rest) -> signal.complete(()).void
+        }.flatten
+
+  def create: IO[Mutex] =
+    Ref[IO].of(unlocked).map(createMutexWithCancellation)
 
 object MutexPlayground extends IOApp.Simple:
 
@@ -95,4 +136,25 @@ object MutexPlayground extends IOApp.Simple:
       results <- (1 to 10).toList.parTraverse(id => createLockingTask(id, mutex))
     yield results
 
-  override def run = demoLockingTask.debug.void
+  def createCancellingTask(id: Int, mutex: Mutex): IO[Int] =
+    if id % 2 == 0 then createLockingTask(id, mutex)
+    else
+      for
+        fib    <- createLockingTask(id, mutex)
+                    .onCancel(IO(s"[task $id] received cancellation!").debug.void)
+                    .start
+        _      <- IO.sleep(2.seconds) >> fib.cancel
+        out    <- fib.join
+        result <- out match
+                    case Succeeded(effect) => effect
+                    case Errored(_)        => IO(-1)
+                    case Canceled()        => IO(-2)
+      yield result
+
+  def demoCancellingTask: IO[List[Int]] =
+    for
+      mutex   <- Mutex.create
+      results <- (1 to 10).toList.parTraverse(id => createCancellingTask(id, mutex))
+    yield results
+
+  override def run = demoCancellingTask.debug.void
