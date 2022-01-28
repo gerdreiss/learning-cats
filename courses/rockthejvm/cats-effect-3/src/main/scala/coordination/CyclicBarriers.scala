@@ -29,16 +29,16 @@ object CyclicBarriers extends IOApp.Simple:
       _ <- IO.sleep((scala.util.Random.nextDouble * 500).toInt.millis)
       _ <- IO(s"[user $id] just heard there's this new thing - signing up... ").debug
       _ <- IO.sleep((scala.util.Random.nextDouble * 1500).toInt.millis)
-      _ <- IO(s"[user $id] On the waiting list now... ").debug
+      _ <- IO(s"[user $id] on the waiting list now... ").debug
       _ <- barrier.await // block the fiber when there are exactly N users waiting
       _ <- IO(s"[user $id] I'm in... ").debug
     yield ()
 
   def openNetwork: IO[Unit] =
     for
-      _       <- IO("[announcer] network is up for reg")
+      _       <- IO("[announcer] network is up for registration").debug
       barrier <- CyclicBarrier[IO](10)
-      _       <- (1 to 9).toList.parTraverse(id => createUser(id, barrier))
+      _       <- (1 to 20).toList.parTraverse(id => createUser(id, barrier))
     yield ()
 
   override def run = openNetwork
