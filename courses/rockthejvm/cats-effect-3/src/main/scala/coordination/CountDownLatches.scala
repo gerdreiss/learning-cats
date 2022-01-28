@@ -82,23 +82,28 @@ object CountDownLatches extends IOApp.Simple:
 
   def downloadFileG(target: Path): IO[Unit] =
     for
-      chunks <- FileServer.getNumberOfChunks
-      latch  <- CountDownLatch[IO](chunks)
-      _      <- (1 to chunks).toList.parTraverse { n =>
-                  for
-                    chunk <- FileServer.getFileChunk(n)
-                    tmp    = Paths.get(s"${target.toAbsolutePath}.part$n")
-                    _     <- writeToFile(tmp, chunk)
-                    _     <- latch.release
-                  yield ()
-                }
-      _      <- latch.await
-      _      <- (1 to chunks).toList.traverse { n =>
-                  appendFileContents(
-                    Paths.get(s"${target.toAbsolutePath}.part$n"),
-                    target
-                  )
-                }
+      numChunks <- FileServer.getNumberOfChunks
+      latch     <- CountDownLatch[IO](numChunks)
+      _         <- IO(s"Download started on $numChunks fibers").debug
+      _         <- (1 to numChunks).toList.parTraverse { id =>
+                     for
+                       _     <- IO(s"[task $id] download chunk...").debug
+                       chunk <- FileServer.getFileChunk(id)
+                       tmp    = Paths.get(s"${target}.part$id")
+                       _     <- writeToFile(tmp, chunk)
+                       _     <- IO(s"[task $id] chunk download complete").debug
+                       _     <- latch.release
+                     yield ()
+                   }
+      _         <- latch.await
+      _         <- IO(s"Combining the chunks to ${target.getFileName}...").debug
+      _         <- (1 to numChunks).toList.traverse { id =>
+                     appendFileContents(
+                       Paths.get(s"${target}.part$id"),
+                       target
+                     )
+                   }
+      _         <- IO("done.")
     yield ()
 
   def downloadTaskDan(
@@ -108,7 +113,7 @@ object CountDownLatches extends IOApp.Simple:
       folder: String
   ): IO[Unit] =
     for
-      _     <- IO(s"[task $id] download chunk...")
+      _     <- IO(s"[task $id] download chunk...").debug
       _     <- IO.sleep((util.Random.nextInt(1000)).millis)
       chunk <- FileServer.getFileChunk(id)
       _     <- writeToFile(Paths.get(s"$folder/$filename.part$id"), chunk)
@@ -120,19 +125,21 @@ object CountDownLatches extends IOApp.Simple:
     for
       n     <- FileServer.getNumberOfChunks
       latch <- CountDownLatch[IO](n)
-      _     <- IO(s"Download started on $n fibers").debug
+      _     <- IO(s"Download started on $n fibers...").debug
       _     <- (1 to n).toList.parTraverse { id =>
                  downloadTaskDan(id, latch, filename, folder)
                }
       _     <- latch.await
+      _     <- IO(s"Combining the chunks to $filename...").debug
       _     <- (1 to n).toList.traverse { id =>
                  appendFileContents(
                    Paths.get(s"$folder/$filename.part$id"),
                    Paths.get(s"$folder/$filename")
                  )
                }
+      _     <- IO("done.")
     yield ()
 
   override def run =
-    // downloadFileG(Paths.get(System.getProperty("user.dir"), "download.txt"))
-    downloadFileDan("download.txt", System.getProperty("user.dir"))
+    // downloadFileDan("download.txt", System.getProperty("user.dir"))
+    downloadFileG(Paths.get(System.getProperty("user.dir"), "download.txt"))
