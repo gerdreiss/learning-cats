@@ -1,7 +1,5 @@
 package coordination
 
-import cats.effect.IOApp
-
 import cats.effect.*
 
 abstract class CustomCountDownLatch:
