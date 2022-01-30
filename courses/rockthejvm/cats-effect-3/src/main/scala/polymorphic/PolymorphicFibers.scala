@@ -75,6 +75,6 @@ object PolymorphicFibers extends IOApp.Simple:
     }
 
   override def run =
-    val effect1 = IO.sleep(1.second) >> IO.println("first effect").debug
-    val effect2 = IO.sleep(2.seconds) >> IO.println("second effect").debug
+    val effect1 = IO.sleep(1.second) >> IO.println("first effect")
+    val effect2 = IO.sleep(2.seconds) >> IO.println("second effect")
     genericRaceUsingSpawn(effect1, effect2).void
