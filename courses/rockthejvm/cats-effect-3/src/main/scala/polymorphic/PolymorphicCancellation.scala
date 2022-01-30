@@ -2,8 +2,12 @@ package polymorphic
 
 import cats.*
 import cats.effect.*
-import cats.syntax.all.*
+import cats.effect.implicits.*
 import cats.effect.kernel.Outcome.*
+import cats.implicits.*
+import utils.generic.*
+
+import scala.concurrent.duration.*
 
 object PolymorphicCancellation extends IOApp.Simple:
 
@@ -66,6 +70,43 @@ object PolymorphicCancellation extends IOApp.Simple:
       IO("releasing the meaning of life...").void
     }
 
-  // exercise
+  def unsafeSleep[F[_], E](duration: FiniteDuration)(using mc: MonadCancel[F, E]): F[Unit] =
+    mc.pure(Thread.sleep(duration.toMillis)) // non-semantic blocking!!!
 
-  override def run = ???
+  // exercise - generalize a piece of code
+  def inputPassword[F[_], E](using mc: MonadCancel[F, E]): F[String] =
+    for
+      _   <- mc.pure("Input password: ").debug
+      _   <- mc.pure("(typing password)").debug
+      _   <- unsafeSleep(5.seconds)
+      pwd <- mc.pure("ThePassword1")
+    yield pwd
+
+  def verifyPassword[F[_], E](pw: String)(using mc: MonadCancel[F, E]): F[Boolean] =
+    for
+      _        <- mc.pure("verifying...").debug
+      _        <- unsafeSleep(2.seconds)
+      verified <- mc.pure(pw == "ThePassword!")
+    yield verified
+
+  def authFlow[F[_], E](using mc: MonadCancel[F, E]): F[Unit] =
+    mc.uncancelable { poll =>
+      for
+        pw       <- poll(inputPassword)
+                      .onCancel(
+                        mc.pure("Authentication timed out. Try again later.").debug.void
+                      )
+        verified <- verifyPassword(pw)
+        _        <- if verified then mc.pure("Authentication successful.").debug
+                    else mc.pure("Authentication failed.").debug
+      yield ()
+    }
+
+  val authProgram: IO[Unit] =
+    for
+      authFib <- authFlow[IO, Throwable].start
+      _       <- IO.sleep(3.second) >> IO("Auth timed out, attempting cancel...").debug >> authFib.cancel
+      _       <- authFib.join
+    yield ()
+
+  override def run = authProgram
