@@ -31,12 +31,13 @@ object PolymorphicCancellation extends IOApp.Simple:
   val molIO: IO[Int]          = monadCancelIO.pure(42)
   val ambitiousModIO: IO[Int] = monadCancelIO.map(molIO)(_ * 10)
 
-  val mustCompute = monadCancelIO.uncancelable { _ =>
-    for
-      _   <- monadCancelIO.pure("once started, I can't go back...")
-      res <- monadCancelIO.pure(56)
-    yield res
-  }
+  val mustCompute: IO[Int] =
+    monadCancelIO.uncancelable { _ =>
+      for
+        _   <- monadCancelIO.pure("once started, I can't go back...")
+        res <- monadCancelIO.pure(56)
+      yield res
+    }
 
   def mustComputeGeneral[F[_], E](using mc: MonadCancel[F, E]): F[Int] =
     mc.uncancelable { _ =>
@@ -46,24 +47,24 @@ object PolymorphicCancellation extends IOApp.Simple:
       yield res
     }
 
-  val mustCompute_v2 = mustComputeGeneral[IO, Throwable]
+  val mustCompute_v2: IO[Int] = mustComputeGeneral[IO, Throwable]
 
   // allow cancellation listeners
-  val mustComputeWithListener    = mustCompute.onCancel(IO("I'm being cancelled!").void)
-  val mustComputeWithListener_v2 =
+  val mustComputeWithListener: IO[Int]    = mustCompute.onCancel(IO("I'm being cancelled!").void)
+  val mustComputeWithListener_v2: IO[Int] =
     monadCancelIO.onCancel(mustCompute, IO("I'm being cancelled!").void)
   // onCancel as an extension method
   // import cats.effect.syntax.monadCancel.* //
 
   // allow finalizers
-  val computationWithFinalizers = monadCancelIO.guaranteeCase(IO(42)) {
+  val computationWithFinalizers: IO[Int] = monadCancelIO.guaranteeCase(IO(42)) {
     case Succeeded(effect) => effect.flatMap(a => IO(s"successful: $a").void)
     case Errored(e)        => IO(s"failed: $e").void
     case Canceled()        => IO("cancelled").void
   }
 
   // bracket pattern is specific to MonadCancel
-  val computationWithUsage =
+  val computationWithUsage: IO[String] =
     monadCancelIO.bracket(IO(42)) { value =>
       IO(s"using the meaning of life: $value")
     } { value =>
@@ -109,4 +110,4 @@ object PolymorphicCancellation extends IOApp.Simple:
       _       <- authFib.join
     yield ()
 
-  override def run = authProgram
+  override def run: IO[Unit] = authProgram

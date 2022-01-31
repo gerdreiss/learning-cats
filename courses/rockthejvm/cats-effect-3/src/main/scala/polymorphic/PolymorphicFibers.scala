@@ -1,12 +1,11 @@
 package polymorphic
 
 import cats.effect.*
+import cats.effect.kernel.Outcome.*
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
-import cats.effect.kernel.Outcome.Canceled
-import cats.effect.kernel.Outcome.Errored
-import cats.effect.kernel.Outcome.Succeeded
 import utils.generic.*
+
 import scala.concurrent.duration.*
 
 object PolymorphicFibers extends IOApp.Simple:
@@ -25,11 +24,9 @@ object PolymorphicFibers extends IOApp.Simple:
 
   // pure, map, flatMap, raiseError, uncancellable, start
 
-  val spawnIO = Spawn[IO] // fetch the given Spawn[IO]
-
-  def runOnSomeThread[A](ioa: IO[A]) =
+  def runOnSomeThread[A](ioa: IO[A]): IO[Outcome[IO, Throwable, A]] =
     for
-      fib    <- spawnIO.start(ioa) // io.start assumes the presence of a Spawn[IO]
+      fib    <- Spawn[IO].start(ioa) // io.start assumes the presence of a Spawn[IO]
       result <- fib.join
     yield result
 
@@ -39,8 +36,8 @@ object PolymorphicFibers extends IOApp.Simple:
       result <- fib.join
     yield result
 
-  val meaningOfLifeOnFiber        = runOnSomeThread(IO(42))
-  val anotherMeaningOfLifeOnFiber = effectOnSomeThread(IO(42))
+  val meaningOfLifeOnFiber: IO[Outcome[IO, Throwable, Int]]        = runOnSomeThread(IO(42))
+  val anotherMeaningOfLifeOnFiber: IO[Outcome[IO, Throwable, Int]] = effectOnSomeThread(IO(42))
 
   // to use .start extension method:
   import cats.effect.syntax.spawn.*
@@ -74,7 +71,7 @@ object PolymorphicFibers extends IOApp.Simple:
             }
     }
 
-  override def run =
+  override def run: IO[Unit] =
     val effect1 = IO.sleep(1.second) >> IO.println("first effect")
     val effect2 = IO.sleep(2.seconds) >> IO.println("second effect")
     genericRaceUsingSpawn(effect1, effect2).void

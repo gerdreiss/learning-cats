@@ -15,11 +15,6 @@ object PolymorphicCoordination extends IOApp.Simple:
     def ref[A](a: A): Ref[F, A]
     def deferred[A]: F[Deferred[F, A]]
 
-  val concurrentIO = Concurrent[IO]
-  // val deferredIO   = Deferred[IO, Int]
-  val deferredIO   = concurrentIO.deferred[Int]
-  val refIO        = concurrentIO.ref(42)
-
   // capabilities: pure, map/flatMap, raiseError, uncancellable, start (fibers), ref/deferred
   def polymorphicEggBoiler[F[_]](using C: Concurrent[F]): F[Unit] =
     def eggReadyNotification(signal: Deferred[F, Unit]) =
@@ -76,4 +71,4 @@ object PolymorphicCoordination extends IOApp.Simple:
         case Right(outcomeB) => Right((fibA, outcomeB))
     }
 
-  override def run = polymorphicEggBoiler
+  override def run: IO[Unit] = polymorphicEggBoiler

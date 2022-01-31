@@ -1,20 +1,19 @@
 package polymorphic
 
-import utils.generic.*
 import cats.*
 import cats.effect.*
-import cats.syntax.applicative.*
-import cats.syntax.functor.*
-import cats.syntax.flatMap.*
-import cats.syntax.parallel.*
-import cats.effect.syntax.spawn.*
+import cats.effect.Outcome.*
 import cats.effect.syntax.monadCancel.*
+import cats.effect.syntax.spawn.*
+import cats.syntax.applicative.*
+import cats.syntax.flatMap.*
+import cats.syntax.functor.*
+import cats.syntax.parallel.*
+import utils.generic.*
+
 import scala.collection.immutable.Queue
 import scala.concurrent.duration.*
 import scala.util.Random
-import cats.effect.kernel.Outcome.Succeeded
-import cats.effect.kernel.Outcome.Errored
-import cats.effect.kernel.Outcome.Canceled
 
 abstract class Mutex[F[_]]:
   def acquire: F[Unit]
@@ -26,7 +25,7 @@ object Mutex:
 
   case class State[F[_]](locked: Boolean, waiting: Queue[Signal[F]])
 
-  def _unlocked[F[_]] = State[F](locked = false, Queue.empty)
+  def _unlocked[F[_]]: State[F] = State[F](locked = false, Queue.empty)
 
   def _create[F[_]](state: Ref[F, State[F]])(using C: Concurrent[F]): Mutex[F] =
     new:
@@ -99,4 +98,4 @@ object MutexDemo extends IOApp.Simple:
       results <- (1 to 10).toList.parTraverse(id => createCancellingTask(id, mutex))
     yield results
 
-  override def run = demoCancellingTask[IO].debug.void
+  override def run: IO[Unit] = demoCancellingTask[IO].debug.void
