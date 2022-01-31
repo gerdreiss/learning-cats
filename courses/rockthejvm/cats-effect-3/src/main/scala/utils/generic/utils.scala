@@ -15,5 +15,5 @@ extension [F[_], A](fa: F[A])
       a
     }
 
-def unsafeSleep[F[_]](duration: FiniteDuration)(using A: Applicative[F]): F[Unit] =
-  A.pure(Thread.sleep(duration.toMillis))
+def unsafeSleep[F[_]: Applicative](duration: FiniteDuration): F[Unit] =
+  (Thread.sleep(duration.toMillis)).pure

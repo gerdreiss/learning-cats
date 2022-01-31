@@ -62,10 +62,10 @@ end Mutex
 
 object MutexDemo extends IOApp.Simple:
 
-  def criticalTask[F[_]: Concurrent]: F[Int] =
+  def criticalTask[F[_]: Applicative: FlatMap]: F[Int] =
     unsafeSleep(1.second) >> Random.nextInt(100).pure
 
-  def createLockingTask[F[_]: Concurrent](id: Int, mutex: Mutex[F]): F[Int] =
+  def createLockingTask[F[_]: Monad](id: Int, mutex: Mutex[F]): F[Int] =
     for
       _   <- s"[task $id] waiting for permission...".pure.debug
       _   <- mutex.acquire // this will block if the mutex has been acquired by some other fiber
