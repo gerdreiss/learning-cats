@@ -41,7 +41,7 @@ object Mutex:
               case State(false, _)    =>
                 State(locked = true, Queue.empty) -> C.unit
               case State(true, queue) =>
-                State(locked = true, queue.enqueue(signal)) -> poll(signal.get).onCancel(cleanup)
+                State(locked = true, queue.enqueueAll(List(signal))) -> poll(signal.get).onCancel(cleanup)
             }.flatten
           }
         }
