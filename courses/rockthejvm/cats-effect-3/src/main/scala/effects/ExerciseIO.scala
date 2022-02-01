@@ -52,4 +52,4 @@ object ExerciseIO extends App:
 
   // println(sum(1000000)) // this crashes
   println(sumIO(1000000).unsafeRunSync())
-  println(fib(50).unsafeRunSync())
+  println(fib(20).unsafeRunSync())
