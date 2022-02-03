@@ -3,13 +3,22 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Success
 import scala.util.Failure
+import scala.annotation.tailrec
 
 object Playground extends IOApp.Simple:
 
   val nums = (1 to 10000000).toList
 
-  def len[A](as: List[A]): BigInt =
-    if as.isEmpty then 0 else 1 + len(as.tail)
+  def lenUnsafe[A](as: List[A]): Int =
+    if as.isEmpty then 0 else 1 + lenUnsafe(as.tail)
+
+  def lenSafe[A](as: List[A]): Int =
+    @tailrec
+    def rec(rest: List[A], acc: Int): Int =
+      if rest.isEmpty then acc
+      else rec(rest.tail, acc + 1)
+
+    rec(as, 0)
 
   def lenIO[A](as: List[A]): IO[BigInt] =
     if as.isEmpty then IO.pure(0)
@@ -21,7 +30,10 @@ object Playground extends IOApp.Simple:
 
   override def run: IO[Unit] =
     IO.println("Learning Cats Effect 3!") *>
-
-    // len(nums)
-    // lenIO(nums).map(println)
-    IO.fromFuture(IO(lenFuture(nums))).map(println)
+      IO.unit *>
+      IO.println(lenSafe(nums)) *>
+      // IO.println(lenUnsafe(nums)) *>
+      // IO.println(lenSafe(nums)) *>
+      // lenIO(nums).map(println)
+      // IO.fromFuture(IO(lenFuture(nums))).map(println)
+      IO.println("End.")
