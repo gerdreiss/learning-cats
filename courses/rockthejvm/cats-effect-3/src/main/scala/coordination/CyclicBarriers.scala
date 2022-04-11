@@ -16,7 +16,7 @@ object CyclicBarriers extends IOApp.Simple:
    * - has a single API: await
    * 
    * A cyclic barrier will (semantically) block all fibers calling its await() emthod
-   * until we have exactly N fibers waiting, at which p;oint the barrier will unblock all fibers
+   * until we have exactly N fibers waiting, at which point the barrier will unblock all fibers
    * and reset to its original state.
    * Any further fiber will again block until we have exactly N fibers waiting.
    * 

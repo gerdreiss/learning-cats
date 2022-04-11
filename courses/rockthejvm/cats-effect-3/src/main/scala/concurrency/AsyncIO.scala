@@ -23,10 +23,10 @@ object AsyncIO extends IOApp.Simple:
   type Callback[A] = ErrorOr[A] => Unit
 
   def meaningOfLifeFunction: Int =
-    Thread.sleep(1000)
     println(
       s"[${Thread.currentThread.getName}] computing meaning of life on some other thread..."
     )
+    Thread.sleep(1000)
     42
 
   def computeMeaningOfLife: ErrorOr[Int] = Try(meaningOfLifeFunction).toEither

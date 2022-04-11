@@ -65,9 +65,7 @@ object Resources extends IOApp.Simple:
       .bracket { scanner =>
         // acquire a connection
         IO(Conn(scanner.nextLine))
-          .bracket { conn =>
-            conn.open() *> IO.never
-          }(conn => conn.close().void)
+          .bracket(_.open() *> IO.never)(_.close().void)
       }(scanner => IO(scanner.close))
 
   val connectionResource: Resource[IO, Conn] = Resource.make(IO(Conn("localhost")))(_.close().void)
@@ -83,8 +81,9 @@ object Resources extends IOApp.Simple:
   val usingResource: String => IO[String] = s => IO(s"using the string: $s").debug
   val releaseResource: String => IO[Unit] = s => IO(s"finalizing the string: $s").debug.void
 
-  val usingResourceWithBracket: IO[String] = simpleResource.bracket(usingResource)(releaseResource)
-  val usingResourceWithResource: IO[String] = Resource.make(simpleResource)(releaseResource).use(usingResource)
+  val usingResourceWithBracket: IO[String]  = simpleResource.bracket(usingResource)(releaseResource)
+  val usingResourceWithResource: IO[String] =
+    Resource.make(simpleResource)(releaseResource).use(usingResource)
 
   def readFileViaResource(path: String): IO[Unit] =
     IO(s"opening file $path using resource").debug *>
