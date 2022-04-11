@@ -30,10 +30,10 @@ object Playground extends IOApp.Simple:
 
   override def run: IO[Unit] =
     IO.println("Learning Cats Effect 3!") *>
-      IO.unit *>
-      IO.println(lenSafe(nums)) *>
+      // IO.unit *>
+      // IO.println(lenSafe(nums)) *>
       // IO.println(lenUnsafe(nums)) *>
       // IO.println(lenSafe(nums)) *>
-      // lenIO(nums).map(println)
+      lenIO(nums).map(println) *>
       // IO.fromFuture(IO(lenFuture(nums))).map(println)
       IO.println("End.")
