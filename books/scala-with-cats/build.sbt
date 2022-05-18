@@ -1,7 +1,7 @@
 organization := "com.github.gerdreiss"
 name         := "learning-cats"
 version      := "1.0.0"
-scalaVersion := "2.13.7"
+scalaVersion := "2.13.8"
 
 scalacOptions ++= Seq(
   "-encoding",
@@ -17,8 +17,8 @@ scalacOptions ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "org.typelevel" %% "cats-core"   % "2.6.1",
-  "org.typelevel" %% "cats-effect" % "3.2.9"
+  "org.typelevel" %% "cats-core"   % "2.7.0",
+  "org.typelevel" %% "cats-effect" % "3.3.11"
 )
 
 addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full)
