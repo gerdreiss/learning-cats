@@ -7,5 +7,5 @@ lazy val root = project
     version      := "0.1.0-SNAPSHOT",
     scalaVersion := scala3Version,
     scalacOptions ++= Seq("-language:postfixOps"),
-    libraryDependencies ++= Seq("org.typelevel" %% "cats-effect" % "3.3.11")
+    libraryDependencies ++= Seq("org.typelevel" %% "cats-effect" % "3.3.12")
   )

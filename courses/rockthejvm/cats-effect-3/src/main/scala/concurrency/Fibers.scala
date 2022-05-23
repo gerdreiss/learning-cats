@@ -7,6 +7,7 @@ import cats.syntax.all.*
 import scala.concurrent.duration.*
 import cats.effect.unsafe.implicits.global
 import java.util.concurrent.TimeoutException
+import cats.ApplicativeThrow
 
 object Fibers extends IOApp.Simple:
 
@@ -106,4 +107,4 @@ object Fibers extends IOApp.Simple:
       }
 
   override def run: IO[Unit] =
-    testCancel.debug.void
+    true.guard[Option].as(42).liftTo[IO](new Throwable("Boom!")).debug.void
