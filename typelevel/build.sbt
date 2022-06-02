@@ -22,6 +22,7 @@ lazy val root = project
     ),
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-mtl"    % "1.2.1",
+      "co.fs2"        %% "fs2-io"      % "3.2.7",
       "org.typelevel" %% "cats-effect" % "3.3.12"
     )
   )
