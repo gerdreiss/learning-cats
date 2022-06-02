@@ -18,10 +18,14 @@ object TellF extends cats.effect.IOApp:
 
   type Log[A] = Writer[Chain[String], A]
 
-  // TODO why do I have to implement a Monad myself? do I?
+  // TODO why do I have to implement a Monad myself? do I, or is an import missing?
   given Monad[Log] with
-    override def flatMap[A, B](fa: Log[A])(f: A => Log[B]): Log[B]       = fa.flatMap(f)
-    override def pure[A](x: A): Log[A]                                   = Writer.value(x)
+    override def flatMap[A, B](fa: Log[A])(f: A => Log[B]): Log[B] =
+      fa.flatMap(f)
+
+    override def pure[A](x: A): Log[A] =
+      Writer.value(x)
+
     override def tailRecM[A, B](a: A)(f: A => Log[Either[A, B]]): Log[B] =
       for
         result <- f(a)
@@ -34,7 +38,6 @@ object TellF extends cats.effect.IOApp:
   case class ServiceResult(userId: Int, companies: List[String])
 
   def serviceCall[F[_]: Applicative](params: ServiceParams): F[ServiceResult] =
-    // a fake call to some external service, replace with real implementation
     ServiceResult(0, List("Raven Enterprises")).pure[F]
 
   def serviceCallWithLog[F[_]: Monad](
@@ -51,6 +54,6 @@ object TellF extends cats.effect.IOApp:
       serviceCallWithLog(ServiceParams("business", 42)).run
 
     for
-      _ <- IO(println(log.show))
+      _ <- IO(println(log))
       _ <- IO(println(result))
     yield ExitCode.Success
