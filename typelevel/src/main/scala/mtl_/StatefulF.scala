@@ -16,19 +16,18 @@ object StatefulF extends IOApp:
     println(s"Called service with $id")
     ServiceResult(0, List("Raven Enterprises")).pure[F]
 
+  def serviceCallAndWriteToCache[F[_]: Monad](id: String)(using F: Stateful[F, Cache]): F[ServiceResult] =
+    for
+      result <- serviceCall[F](id)
+      _      <- F.modify(_.updated(id, result))
+    yield result
+
   def cachedServiceCall[F[_]: Monad](id: String)(using F: Stateful[F, Cache]): F[ServiceResult] =
     for
       cache  <- F.get
       result <- cache.get(id) match
                   case Some(result) => result.pure[F]
-                  case None         => serviceCall[F](id)
-    yield result
-
-  def serviceCallAndWriteToCache[F[_]: Monad](id: String)(using F: Stateful[F, Cache]): F[ServiceResult] =
-    for
-      result <- serviceCall[F](id)
-      cache  <- F.get
-      _      <- F.set(cache.updated(id, result))
+                  case None         => serviceCallAndWriteToCache[F](id)
     yield result
 
   def invalidate[F[_]](using F: Stateful[F, Cache]): F[Unit] = F.set(Map.empty)
